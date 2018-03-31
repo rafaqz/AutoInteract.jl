@@ -79,14 +79,14 @@ make_widgets(xs::Tuple, label) = begin
 end
 make_widgets(x::Array, label) = nothing
 make_widgets(x::Int, label) = begin
-    low = 0
     step = 1
     if x == 0
-        high = 100
+        range = 0:step:100
+    elseif x < 0
+        range = 2x:step:0
     else
-        high = x * 2 + 1
+        range = 0:step:2x
     end
-    range = low:step:high
     make_widgets(x, label, range)
 end
 make_widgets(x::AbstractFloat, label) = begin
@@ -114,7 +114,7 @@ end
 
 
 @require DataFrames begin
-make_plottable(x::DataFrame, args...) = begin
+make_plottables(x::DataFrame, args...) = begin
     labels = []
     values = []
     for name in names(x)
@@ -131,25 +131,25 @@ make_plottable(x::DataFrame, args...) = begin
 end
 end
 @require AxisArrays begin
-make_plottable(xs::AxisArray, args...) = make_toggles(xs)
+make_plottables(xs::AxisArray, args...) = make_toggles(xs)
 end
-make_plottable(x::Associative, args...) = begin
+make_plottables(x::Associative, args...) = begin
     dict = OrderedDict()
     for key in keys(x)
         field = x[key]
-        widget = make_plottable(field, string(key))
+        widget = make_plottables(field, string(key))
         if widget != nothing 
             dict[key] = widget 
         end
     end
     return length(keys(dict)) > 0 ? dict : nothing
 end
-make_plottable(x::Any, args...) = begin
+make_plottables(x::Any, args...) = begin
     dict = OrderedDict()
     if length(fieldnames(x)) > 0
         for name in fieldnames(x)
             field = getfield(x, name)
-            widget = make_plottable(field, string(name))
+            widget = make_plottables(field, string(name))
             if widget != nothing 
                 dict[name] = widget 
             end
@@ -157,10 +157,10 @@ make_plottable(x::Any, args...) = begin
     end
     return length(keys(dict)) > 0 ? dict : nothing
 end
-make_plottable(xs::Tuple) = make_plottable(xs, "unknown")
-make_plottable(xs::Tuple, label) = begin
+make_plottables(xs::Tuple) = make_plottables(xs, "unknown")
+make_plottables(xs::Tuple, label) = begin
     labels = [string(label, n) for n = 1:length(xs)]
-    widgets = tuple(make_plottable.(xs, labels)...)
+    widgets = tuple(make_plottables.(xs, labels)...)
     if all(w -> w == nothing, widgets)
         return nothing
     else
@@ -168,7 +168,7 @@ make_plottable(xs::Tuple, label) = begin
     end
 end
 # Arrays get a togendgle to control subplots 
-make_plottable(x::Vector, label) = make_widgets(false, label)
+make_plottables(x::Vector, label) = make_widgets(false, label)
 
 
 @require AxisArrays begin

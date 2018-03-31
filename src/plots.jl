@@ -1,8 +1,8 @@
 const deflayout = Plots.EmptyLayout(height=:auto, width=:auto)
 
-plot_all(data, plottable, range) = begin
+plot_all(data, plottables, range, label...) = begin
     plots = []
-    plot_all!(plots, data, plottable, range)
+    plot_all!(plots, data, plottables, range, label)
     num_plots = length(plots)
     if num_plots > 0
         row_layout = Plots.GridLayout(num_plots, 1)
@@ -12,19 +12,19 @@ plot_all(data, plottable, range) = begin
     end
 end
 
-plot_all!(plots, data::Associative, plottable::Associative, range) =
-for key in keys(plottable)
-    plot_all!(plots, data[key], plottable[key], range)
-end
-plot_all!(plots, data::Any, plottable::Associative, range) =
-for key in keys(plottable)
-    plot_all!(plots, getfield(data, key), plottable[key], range)
-end
-plot_all!(plots, data::Tuple, plottable::Tuple, range) =
-for i in 1:length(data)
-    plot_all!(plots, data[i], plottable[i], range)
-end
-plot_all!(plots, data::AxisArray{T,2}, plottable::AbstractArray, range) where T = begin
+plot_all!(plots, data::Associative, plottables::Associative, range, label...) =
+    for key in keys(plottables)
+        plot_all!(plots, data[key], plottables[key], range, key)
+    end
+plot_all!(plots, data::Any, plottables::Associative, range, label...) =
+    for key in keys(plottables)
+        plot_all!(plots, getfield(data, key), plottables[key], range, key)
+    end
+plot_all!(plots, data::Tuple, plottables::Tuple, range, label...) =
+    for i in 1:length(data)
+        plot_all!(plots, data[i], plottables[i], range)
+    end
+plot_all!(plots, data::AxisArray{T,2}, plottables::AbstractArray, range, label...) where T = begin
     p = plot()
     plotted = false
     labels = axes(data)[1]
@@ -36,7 +36,7 @@ plot_all!(plots, data::AxisArray{T,2}, plottable::AbstractArray, range) where T 
         push!(plots, p)
     end
 end
-plot_all!(plots, data::AxisArray{T,3}, plottable::AbstractArray, range) where T = begin
+plot_all!(plots, data::AxisArray{T,3}, plottables::AbstractArray, range, label...) where T = begin
     p = plot()
     plotted = false
     labels1 = axes(data)[1]
@@ -45,7 +45,7 @@ plot_all!(plots, data::AxisArray{T,3}, plottable::AbstractArray, range) where T 
     cols = length(data[1, :, 1])
     for i = 1:rows
         for j = 1:cols
-            if plottable[i, j]
+            if plottables[i, j]
                 l = string(labels1[i], ",", labels2[j])
                 plot!(p, data[i, j, range], label=l, layout=deflayout)
                 plotted = true
@@ -57,11 +57,11 @@ plot_all!(plots, data::AxisArray{T,3}, plottable::AbstractArray, range) where T 
     end
 end
 @require DataFrames begin
-plot_all!(plots, data::DataFrame, plottable, range) = begin
+plot_all!(plots, data::DataFrame, plottables, range, label...) = begin
     p = plot()
     plotted = false
     for (i, n) in enumerate(names(data))
-        if plottable[i]
+        if plottables[i]
             plot!(p, data[n][range], label=n, layout=deflayout)
             plotted = true
         end
@@ -71,11 +71,14 @@ plot_all!(plots, data::DataFrame, plottable, range) = begin
     end
 end
 end
-plot_all!(plots, data, plottable::Bool, range) = begin
-    if plottable 
-        # if all(r  -> r <= length(data), (range.start, range.stop))
-    push!(plots, plot(data[range])) end
-    # end
+plot_all!(plots, data, plottables::Bool, range, label...) = begin
+    if !plottables || length(data) < (range.stop)
+        return 
+    end
+
+    if length(label) > 0
+        push!(plots, plot(data[range], label = label[1]))
+    else
+        push!(plots, plot(data[range]))
+    end
 end
-
-

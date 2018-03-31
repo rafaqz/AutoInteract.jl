@@ -10,12 +10,10 @@ using Interact
 using Reactive
 using Plots
 
-export apply_all
-export make_widgets, make_interface, make_plottable, spreadwidgets
+export make_widgets, make_interface, make_plottables, spreadwidgets
 export plot_all, plot_all!
-export get_signals
+export get_signals, apply_signals!
 
-include("apply.jl")
 include("interface.jl")
 include("plots.jl")
 include("signals.jl")

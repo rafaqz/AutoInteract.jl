@@ -10,8 +10,7 @@ get_signals(xs::Tuple) = begin
     end
     return map(sigs::Vararg -> sigs, map(s -> signal(s), sig_array)...)
 end
-get_signals(x::OrderedDict) = begin
-    sigs = []
+get_signals(x::OrderedDict) = begin sigs = []
     used_keys = []
     k = keys(x)
     for key in k
@@ -29,22 +28,6 @@ get_signals(x::OrderedDict) = begin
         return nothing
     end
 end
-# get_signals(x::Any) = begin
-#   dict = OrderedDict()
-#   if length(fieldnames(x)) > 0
-#     for name in fieldnames(x)
-#       field = get_signals(getfield(x, name))
-#       if field != nothing
-#         println(name)
-#         println(field)
-#         dict[name] = field
-#       end
-#     end
-#     return length(dict) > 0 ? dict : nothing
-#   else
-#     return nothing
-#   end
-# end
 get_signals(x::Signal) = x
 get_signals(x::Interact.InputWidget) = signal(x)
 get_signals(xs::AbstractArray) = 
@@ -53,3 +36,26 @@ get_signals(x::Bool) = Signal(x)
 get_signals(x::Number) = Signal(x)
 get_signals(x::String) = Signal(x)
 get_signals(x::Symbol) = Signal(x)
+
+
+apply_signals!(data::Associative, signal::Associative) = begin
+    for key in keys(signal) 
+        data[key] = apply_signals!(data[key], signal[key]) 
+    end
+    return data
+end
+apply_signals!(data::Tuple, signal::Tuple) = apply_signals!.(data, signal)
+@require StaticArrays begin
+apply_signals!(data::FieldVector, signal) = data .= signal
+end
+@require MechanisticModels begin
+apply_signals!(data::ParamSpec, signal::Float64) = 
+    ParamSpec(data.id, data.unit, signal, data.range, data.flags, data.description)
+end
+apply_signals!(data, signal::Associative) = begin
+    for key in keys(signal) 
+        setfield!(data, key, apply_signals!(getfield(data, key), signal[key]))
+    end
+    return data
+end
+apply_signals!(data, signal) = signal
