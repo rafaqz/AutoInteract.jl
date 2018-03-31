@@ -1,5 +1,7 @@
 # AutoInteract
 
+[![Build Status](https://travis-ci.org/rafaqz/AutoInteract.jl.svg?branch=master)](https://travis-ci.org/rafaqz/AutoInteract.jl)
+
 This module is to allow automatic generation of interactive interfaces
 for any julia type than contains anything that can be controlled with buttons
 and sliders.
