@@ -5,13 +5,11 @@ for any julia type than contains anything that can be controlled with buttons
 and sliders.
 
 It also facilities interactive plotting of any AbstractArray nested anywhere in
-the provided type, by providing a toggle-button interface and a `plot_all`
-command.
+the data.
 
-Widgets, signals, and "plottables" are all return using as much as possible the
-same hierarchical structure as the original data. This means plots can be
-plotted automatically, and signals can automatically update the data
-recursively.
+
+See the [Documentation](https://rafaqz.github.io/AutoInteract.jl/latest/) for more details.
+
 
 Currently AutoInteract.jl supports [Interact.jl](https://github.com/JuliaGizmos/Interact.jl)
 and [Reactive.jl](https://github.com/JuliaGizmos/Reactive.jl), but other signals
