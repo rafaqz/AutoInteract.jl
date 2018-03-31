@@ -1,6 +1,15 @@
 const deflayout = Plots.EmptyLayout(height=:auto, width=:auto)
 
-plot_all(data, plottables, range, label...) = begin
+
+"""
+    plot_all(data, plottables, range, [label])
+
+Plot all data for selected plottables, over the specified range.
+"""
+function plot_all end
+
+plot_all(data, plottables, range) =  plot_all(data, plottables, range, "")
+plot_all(data, plottables, range, label) = begin
     plots = []
     plot_all!(plots, data, plottables, range, label)
     num_plots = length(plots)
@@ -11,6 +20,13 @@ plot_all(data, plottables, range, label...) = begin
         return nothing
     end
 end
+
+"""
+    plot_all!(plots, data, plottables, range, label)
+
+Recursive plotting methods for (almost) all types.
+"""
+function plot_all! end
 
 plot_all!(plots, data::Associative, plottables::Associative, range, label...) =
     for key in keys(plottables)

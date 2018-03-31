@@ -1,49 +1,13 @@
-@require DataFrames begin
-make_widgets(x::DataFrame, args...) = begin
-    array = []
-    for name in names(x)
-        field = x[name]
-        widget = make_widgets(field, string(name))
-        if widget != nothing 
-            push!(array, widget)
-        end
-    end
-    # Return 2 dimensional array for column output
-    return reshape(array, 1, length(array))
-end
-end
-@require AxisArrays begin
-make_widgets(xs::AxisArray, args...) = nothing
-end
-@require StaticArrays begin
-make_widgets(xs::FieldVector, args...) = begin
-    names = string.(fieldnames(xs))
-    [make_widgets(x, n) for (x, n) in zip(xs, names)]
-end
-end
-make_widgets(x::Associative, args...) = begin
-    widgets = []
-    labels = []
-    for key in keys(x)
-        field = x[key]
-        widget = make_widgets(field, string(key))
-        if widget != nothing 
-            push!(widgets, widget)
-            push!(labels, key) 
-        end
-    end
-    if length(widgets) > 0 
-        if all(w -> typeof(w) == typeof(widgets[1]), widgets)
-            widgettype = typeof(widgets[1])
-        else
-            widgettype = Any
-        end
-        return OrderedDict{Any,widgettype}(zip(labels, widgets))
-    else
-        return nothing
-    end
-end
-make_widgets(x, args...) = begin
+
+"""
+    make_widgets(x, label)
+
+Widets are built recursively from any type, labelled using the dict or struct 
+label, AxisArray names, etc. 
+
+They can then be edited before retrieving signals and building an interface.
+"""
+make_widgets(x, label...) = begin
     widgets = []
     labels = []
     if length(fieldnames(x)) > 0
@@ -65,6 +29,28 @@ make_widgets(x, args...) = begin
         else
             return nothing
         end
+    else
+        return nothing
+    end
+end
+make_widgets(x::Associative, label...) = begin
+    widgets = []
+    labels = []
+    for key in keys(x)
+        field = x[key]
+        widget = make_widgets(field, string(key))
+        if widget != nothing 
+            push!(widgets, widget)
+            push!(labels, key) 
+        end
+    end
+    if length(widgets) > 0 
+        if all(w -> typeof(w) == typeof(widgets[1]), widgets)
+            widgettype = typeof(widgets[1])
+        else
+            widgettype = Any
+        end
+        return OrderedDict{Any,widgettype}(zip(labels, widgets))
     else
         return nothing
     end
@@ -111,29 +97,39 @@ make_widgets(x::Bool, label) = begin
     widget.signal.name = label * "_toggle"
     return widget
 end
-
-
 @require DataFrames begin
-make_plottables(x::DataFrame, args...) = begin
-    labels = []
-    values = []
+make_widgets(x::DataFrame, label...) = begin
+    array = []
     for name in names(x)
         field = x[name]
-        widget = make_widgets(false, string(name))
+        widget = make_widgets(field, string(name))
         if widget != nothing 
-            push!(labels, name) 
-            push!(values, widget) 
+            push!(array, widget)
         end
     end
     # Return 2 dimensional array for column output
-    return AxisArray(reshape(values, 1, length(values)), 
-                     Axis{:row}([:row]), Axis{:col}(labels))
+    return reshape(array, 1, length(array))
 end
 end
 @require AxisArrays begin
-make_plottables(xs::AxisArray, args...) = make_toggles(xs)
+make_widgets(xs::AxisArray, label...) = nothing
 end
-make_plottables(x::Associative, args...) = begin
+@require StaticArrays begin
+make_widgets(xs::FieldVector, label...) = begin
+    names = string.(fieldnames(xs))
+    [make_widgets(x, n) for (x, n) in zip(xs, names)]
+end
+end
+
+
+"""
+    make_plottables(x, label)
+
+Generate 'plotable' toggles recursively, with optional label.
+"""
+function make_plottables end
+
+make_plottables(x::Associative, label...) = begin
     dict = OrderedDict()
     for key in keys(x)
         field = x[key]
@@ -144,7 +140,7 @@ make_plottables(x::Associative, args...) = begin
     end
     return length(keys(dict)) > 0 ? dict : nothing
 end
-make_plottables(x::Any, args...) = begin
+make_plottables(x::Any, label...) = begin
     dict = OrderedDict()
     if length(fieldnames(x)) > 0
         for name in fieldnames(x)
@@ -169,6 +165,26 @@ make_plottables(xs::Tuple, label) = begin
 end
 # Arrays get a togendgle to control subplots 
 make_plottables(x::Vector, label) = make_widgets(false, label)
+@require DataFrames begin
+make_plottables(x::DataFrame, label...) = begin
+    labels = []
+    values = []
+    for name in names(x)
+        field = x[name]
+        widget = make_widgets(false, string(name))
+        if widget != nothing 
+            push!(labels, name) 
+            push!(values, widget) 
+        end
+    end
+    # Return 2 dimensional array for column output
+    return AxisArray(reshape(values, 1, length(values)), 
+                     Axis{:row}([:row]), Axis{:col}(labels))
+end
+end
+@require AxisArrays begin
+make_plottables(xs::AxisArray, label...) = make_toggles(xs)
+end
 
 
 @require AxisArrays begin
@@ -196,6 +212,24 @@ make_toggles(rownames::AbstractArray{String}, colnames::AbstractArray{String}) =
 end
 
 
+
+"""
+    make_interface(xs; box)
+
+Interfaces are build recursively from any type containing widgets. This
+mostly means anything returned by make_widgets, but also after having any
+sub-components deleted custom components added:
+"""
+make_interface(xs::Tuple; box = hbox) = box(make_interface.(xs)...)
+
+make_interface(xs::AbstractVector{Interact.Slider{T}}; box = hbox) where T =
+    spreadwidgets(make_interface.(xs); cols = 2)
+make_interface(xs::AbstractVector{Interact.ToggleButton}; box = hbox) = 
+    box(make_interface.(xs)...)
+make_interface(xs::AbstractArray{T,1}; box = hbox) where T = 
+    spreadwidgets(make_interface.(xs); cols = 2)
+make_interface(xs::AbstractArray{T,2}; box = hbox) where T = arrange_columns(xs; box = box)
+make_interface(x::Interact.Widget; box = hbox) = x
 @require DataStructures begin
 make_interface(x::OrderedDict{Any,Interact.Slider{T}}; box = vbox) where T = begin
     widgets = []
@@ -216,15 +250,6 @@ make_interface(x::OrderedDict; box = vbox) = begin
     return box(widgets...)
 end
 end
-make_interface(xs::Tuple; box = hbox) = box(make_interface.(xs)...)
-make_interface(xs::AbstractVector{Interact.Slider{T}}; box = hbox) where T =
-    spreadwidgets(make_interface.(xs); cols = 2)
-make_interface(xs::AbstractVector{Interact.ToggleButton}; box = hbox) = 
-    box(make_interface.(xs)...)
-make_interface(xs::AbstractArray{T,1}; box = hbox) where T = 
-    spreadwidgets(make_interface.(xs); cols = 2)
-make_interface(xs::AbstractArray{T,2}; box = hbox) where T = arrange_columns(xs; box = box)
-make_interface(x::Interact.Widget; box = hbox) = x
 
 
 function arrange_columns(xs; box = hbox) 
@@ -236,7 +261,11 @@ function arrange_columns(xs; box = hbox)
 end
 
 
-# Create multiple columns to spread widgets accross the page
+"""
+    spreadwidgets(widgets; cols = 6)
+
+Create multiple columns to spread widgets accross a page
+"""
 function spreadwidgets(widgets; cols = 6)
     vboxes = []
     widget_col = []

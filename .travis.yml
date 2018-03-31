@@ -29,7 +29,8 @@ git:
 #script:
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("AutoInteract"); Pkg.test("AutoInteract"; coverage=true)'
 after_success:
-  # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("AutoInteract")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
   - julia -e 'cd(Pkg.dir("AutoInteract")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  # update docs
+  - julia -e 'Pkg.add("Documenter"); Pkg.checkout("Documenter")'
+  - julia -e 'cd(Pkg.dir("AutoInteract")); ENV["DOCUMENTER_DEBUG"] = "true"; include(joinpath("docs", "make.jl"))'

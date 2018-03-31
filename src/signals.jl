@@ -1,3 +1,10 @@
+"""
+    get_signals(x)
+
+Signals can be recursively retrieved from any type containing widgets.
+"""
+function get_signals end
+
 get_signals(xs::Tuple) = begin
     sig_array = []
     for x in xs
@@ -32,11 +39,14 @@ get_signals(x::Signal) = x
 get_signals(x::Interact.InputWidget) = signal(x)
 get_signals(xs::AbstractArray) = 
     map(s::Vararg -> reshape([s...], size(xs)), get_signals.(xs)...)
-get_signals(x::Bool) = Signal(x)
-get_signals(x::Number) = Signal(x)
-get_signals(x::String) = Signal(x)
-get_signals(x::Symbol) = Signal(x)
 
+
+"""
+    apply_signals!(data, signal)
+
+Signals can be recursively appied to data.
+"""
+function apply_signals! end
 
 apply_signals!(data::Associative, signal::Associative) = begin
     for key in keys(signal) 
