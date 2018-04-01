@@ -56,34 +56,24 @@ make_widgets(x::Associative, label...) = begin
     end
 end
 make_widgets(xs::Tuple) = begin
-    label = "unknown"
+    label = defaults[:missing_label]
     make_widgets(xs, label)
 end
 make_widgets(xs::Tuple, label) = begin
     labels = [string(label, n) for n = 1:length(xs)]
     tuple(make_widgets.(xs, labels)...)
 end
-make_widgets(x::Array, label) = nothing
-make_widgets(x::Int, label) = begin
-    step = 1
-    if x == 0
-        range = 0:step:100
-    elseif x < 0
-        range = 2x:step:0
-    else
-        range = 0:step:2x
+make_widgets(xs::AbstractArray, label) = 
+    if length(xs) <= defaults[:maxlen_widget_array]
+        labels = [string(label, n) for n = 1:length(xs)]
+        make_widgets.(xs, labels)
     end
+make_widgets(x::Integer, label) = begin
+    range = get_range(x, label)
     make_widgets(x, label, range)
 end
 make_widgets(x::AbstractFloat, label) = begin
-    low = 0.0
-    if x == 0.0
-        high = 1.0
-    else
-        high = x * 2
-    end
-    step = (high - low) / 100.0
-    range = low:step:high
+    range = get_range(x, label)
     return make_widgets(x, label, range)
 end
 make_widgets(x::Real, label, range) = begin
@@ -125,7 +115,7 @@ end
 """
     make_plottables(x, label)
 
-Generate 'plotable' toggles recursively, with optional label.
+Generate 'plottable' toggles recursively, with optional label.
 """
 function make_plottables end
 
@@ -163,8 +153,6 @@ make_plottables(xs::Tuple, label) = begin
         return widgets
     end
 end
-# Arrays get a togendgle to control subplots 
-make_plottables(x::Vector, label) = make_widgets(false, label)
 @require DataFrames begin
 make_plottables(x::DataFrame, label...) = begin
     labels = []
@@ -185,6 +173,11 @@ end
 @require AxisArrays begin
 make_plottables(xs::AxisArray, label...) = make_toggles(xs)
 end
+# Arrays get a toggle to control subplots 
+make_plottables(x::Vector, label) = 
+    if length(x) >= defaults[:minlen_plottable_array]
+        make_widgets(false, label)
+    end
 
 
 @require AxisArrays begin
@@ -220,18 +213,18 @@ Interfaces are build recursively from any type containing widgets. This
 mostly means anything returned by make_widgets, but also after having any
 sub-components deleted custom components added:
 """
-make_interface(xs::Tuple; box = hbox) = box(make_interface.(xs)...)
+make_interface(xs::Tuple; box = get_box(xs)) = box(make_interface.(xs)...)
 
-make_interface(xs::AbstractVector{Interact.Slider{T}}; box = hbox) where T =
+make_interface(xs::AbstractVector{Interact.Slider{T}}; box = get_box(xs)) where T =
     spreadwidgets(make_interface.(xs); cols = 2)
-make_interface(xs::AbstractVector{Interact.ToggleButton}; box = hbox) = 
+make_interface(xs::AbstractVector{Interact.ToggleButton}; box = get_box(xs)) = 
     box(make_interface.(xs)...)
-make_interface(xs::AbstractArray{T,1}; box = hbox) where T = 
+make_interface(xs::AbstractArray{T,1}; box = get_box(xs)) where T = 
     spreadwidgets(make_interface.(xs); cols = 2)
-make_interface(xs::AbstractArray{T,2}; box = hbox) where T = arrange_columns(xs; box = box)
-make_interface(x::Interact.Widget; box = hbox) = x
+make_interface(xs::AbstractArray{T,2}; box = get_box(xs)) where T = arrange_columns(xs; box = box)
+make_interface(x::Interact.Widget; box = get_box(x)) = x
 @require DataStructures begin
-make_interface(x::OrderedDict{Any,Interact.Slider{T}}; box = vbox) where T = begin
+make_interface(x::OrderedDict{Any,Interact.Slider{T}}; box = get_box(x)) where T = begin
     widgets = []
     for (key, val) in x
         if val != nothing
@@ -240,7 +233,7 @@ make_interface(x::OrderedDict{Any,Interact.Slider{T}}; box = vbox) where T = beg
     end
     return spreadwidgets(widgets; cols = 3)
 end
-make_interface(x::OrderedDict; box = vbox) = begin
+make_interface(x::OrderedDict; box = get_box(x)) = begin
     widgets = []
     for (key, val) in x
         if val != nothing
@@ -251,8 +244,7 @@ make_interface(x::OrderedDict; box = vbox) = begin
 end
 end
 
-
-function arrange_columns(xs; box = hbox) 
+function arrange_columns(xs; box = get_box(xs)) 
     columns = []
     for col in 1:size(xs, 2)
         push!(columns, vbox(make_interface.(xs[:,col])...))

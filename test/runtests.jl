@@ -103,13 +103,22 @@ end
         ref_iface = vbox(sliders...)
     end
 
-    @testset "Arrays are ignored" begin
+    @testset "Arrays < maxlen are ignored" begin
+        set_defaults(:maxlen_widget_array => 2)
         ref_sliders = nothing
         sliders = make_widgets([1.0, 2.0, 3.0])
         @test ref_sliders == sliders
     end
 
+    @testset "Arrays > minlen make sliders" begin
+        set_defaults(:maxlen_widget_array => 3)
+        ref_sliders = mockslider.((1.0, 2.0, 3.0), ("s1", "s2", "s3"), (0.0:0.02:2.0, 0.0:0.04:4.0, 0.0:0.06:6.0))
+        sliders = make_widgets([1.0, 2.0, 3.0], "s")
+        compare_slider.(ref_sliders, sliders)
+    end
+
     @testset "interface from struct" begin
+        set_defaults(:maxlen_widget_array => 0)
         data = teststruct([1.0,2.0,3.0], true, 10, 10.0)
         b = mocktoggle(true, "b") 
         i = mockslider(10, "i", 0:1:20)
@@ -159,6 +168,13 @@ end
         p = plot_all(data, signals.value, 1:100)
         @test length(p.subplots) == 1
         @test p.subplots[1].series_list[1].d[:y] == array
+    end
+
+
+    @testset "Makes widget for arrays larger than > minlen" begin
+        set_defaults(:minlen_plottable_array => 3)
+        @test make_plottables([1, 2], "too small") == nothing
+        compare_toggle(make_plottables([1, 2, 3], "ok"), mocktoggle(false, "ok"))
     end
 end
 

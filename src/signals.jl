@@ -44,7 +44,7 @@ get_signals(xs::AbstractArray) =
 """
     apply_signals!(data, signal)
 
-Signals can be recursively appied to data.
+Signals can be recursively applied back to data.
 """
 function apply_signals! end
 
@@ -57,10 +57,6 @@ end
 apply_signals!(data::Tuple, signal::Tuple) = apply_signals!.(data, signal)
 @require StaticArrays begin
 apply_signals!(data::FieldVector, signal) = data .= signal
-end
-@require MechanisticModels begin
-apply_signals!(data::ParamSpec, signal::Float64) = 
-    ParamSpec(data.id, data.unit, signal, data.range, data.flags, data.description)
 end
 apply_signals!(data, signal::Associative) = begin
     for key in keys(signal) 

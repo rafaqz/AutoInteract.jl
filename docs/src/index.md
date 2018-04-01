@@ -47,8 +47,25 @@ plot_all
 plot_all!
 ```
 
+# Customisation API
+
+```@docs
+set_defaults
+```
+
+```@docs
+steprange
+```
+
+```@docs
+box
+```
+
 ## Misc
+
 
 ```@docs
 spreadwidgets
 ```
+
+
