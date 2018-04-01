@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.org/rafaqz/AutoInteract.jl.svg?branch=master)](https://travis-ci.org/rafaqz/AutoInteract.jl)
 
-The aim of this module is to allow automatic generation of interactive
-interfaces for any julia type that could be controlled with buttons and sliders.
+The aim of this module is to allow automatic generation of an interactive
+interface for any julia type.
 
 It also facilities interactive plotting of any AbstractArray nested anywhere in
 the data.
