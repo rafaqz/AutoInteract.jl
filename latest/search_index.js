@@ -61,7 +61,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Introduction",
     "title": "AutoInteract.apply_signals!",
     "category": "function",
-    "text": "apply_signals!(data, signal)\n\nSignals can be recursively appied to data.\n\n\n\n"
+    "text": "apply_signals!(data, signal)\n\nSignals can be recursively applied back to data.\n\n\n\n"
 },
 
 {
@@ -77,7 +77,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Introduction",
     "title": "AutoInteract.make_plottables",
     "category": "function",
-    "text": "make_plottables(x, label)\n\nGenerate \'plotable\' toggles recursively, with optional label.\n\n\n\n"
+    "text": "make_plottables(x, label)\n\nGenerate \'plottable\' toggles recursively, with optional label.\n\n\n\n"
 },
 
 {
@@ -102,6 +102,22 @@ var documenterSearchIndex = {"docs": [
     "title": "Plottables and plotting",
     "category": "section",
     "text": "AutoInteract also generates an interface for plotting arbitrary data in an interface. \'Plottables\' are structured objects containing toggle-button widgets indicating if any data can be plotted. Mostly this means it inherits AbstractArray, or it is the last dimension of an AxisArray, with a grid of named toggle-buttons being made for the other dimensions. Signals from plottables can be plotted with plot_all().make_plottablesplot_allplot_all!"
+},
+
+{
+    "location": "index.html#AutoInteract.set_defaults",
+    "page": "Introduction",
+    "title": "AutoInteract.set_defaults",
+    "category": "function",
+    "text": "set_defaults(args...)\n\nSet global defaults to control behaviour.\n\nExamples\n\nset_defaults(:maxlen_slider_array => 10, \n             :minlen_plot_array => 10,\n             :missing_label => \"List\"\n            )\n\n\n\n"
+},
+
+{
+    "location": "index.html#Customisation-API-1",
+    "page": "Introduction",
+    "title": "Customisation API",
+    "category": "section",
+    "text": "set_defaultssteprangebox"
 },
 
 {
