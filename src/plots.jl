@@ -2,16 +2,16 @@ const deflayout = Plots.EmptyLayout(height=:auto, width=:auto)
 
 
 """
-    plot_all(data, plottables, range, [label])
+    plot_all(data, plottables, [label])
 
-Plot all data for selected plottables, over the specified range.
+Plot all data for selected plottables.
 """
 function plot_all end
 
-plot_all(data, plottables, range) =  plot_all(data, plottables, range, "")
-plot_all(data, plottables, range, label) = begin
+plot_all(data, plottables) =  plot_all(data, plottables, "")
+plot_all(data, plottables, label) = begin
     plots = []
-    plot_all!(plots, data, plottables, range, label)
+    plot_all!(plots, data, plottables, label)
     num_plots = length(plots)
     if num_plots > 0
         row_layout = Plots.GridLayout(num_plots, 1)
@@ -22,39 +22,35 @@ plot_all(data, plottables, range, label) = begin
 end
 
 """
-    plot_all!(plots, data, plottables, range, label)
+    plot_all!(plots, data, plottables, label)
 
 Recursive plotting methods for (almost) all types.
 """
 function plot_all! end
 
-plot_all!(plots, data::Associative, plottables::Associative, range, label...) =
+plot_all!(plots, data::Associative, plottables::Associative, label...) =
     for key in keys(plottables)
-        plot_all!(plots, data[key], plottables[key], range, key)
+        plot_all!(plots, data[key], plottables[key], key)
     end
-plot_all!(plots, data::Any, plottables::Associative, range, label...) =
+plot_all!(plots, data::Any, plottables::Associative, label...) =
     for key in keys(plottables)
-        plot_all!(plots, getfield(data, key), plottables[key], range, key)
+        plot_all!(plots, getfield(data, key), plottables[key], key)
     end
-plot_all!(plots, data::Tuple, plottables::Tuple, range, label...) =
+plot_all!(plots, data::Tuple, plottables::Tuple, label...) =
     for i in 1:length(data)
-        plot_all!(plots, data[i], plottables[i], range)
+        plot_all!(plots, data[i], plottables[i])
     end
-plot_all!(plots, data::AxisArray{T,2}, plottables::AbstractArray, range, label...) where T = begin
+@require AxisArrays begin
+plot_all!(plots, data::AxisArray{T,2}, plottables::AbstractArray, label...) where T = begin
     p = plot()
-    plotted = false
     labels = axes(data)[1]
     for i = 1:length(data[:, 1])
-        plot!(p, data[i, range], label=labels[i], layout=deflayout)
-        plotted = true
+        plotit!(p, data, data[i, :], labels[i])
     end
-    if plotted
-        push!(plots, p)
-    end
+    push_if_plotted!(plots, p)
 end
-plot_all!(plots, data::AxisArray{T,3}, plottables::AbstractArray, range, label...) where T = begin
+plot_all!(plots, data::AxisArray{T,3}, plottables::AbstractArray, label...) where T = begin
     p = plot()
-    plotted = false
     labels1 = axes(data)[1]
     labels2 = axes(data)[2]
     rows = length(data[:, 1, 1])
@@ -63,38 +59,43 @@ plot_all!(plots, data::AxisArray{T,3}, plottables::AbstractArray, range, label..
         for j = 1:cols
             if plottables[i, j]
                 l = string(labels1[i], ",", labels2[j])
-                plot!(p, data[i, j, range], label=l, layout=deflayout)
-                plotted = true
+                plotit!(p, data, data[i, j, :], l)
             end
         end
     end
-    if plotted
-        push!(plots, p)
-    end
+    push_if_plotted!(plots, p)
+end
 end
 @require DataFrames begin
-plot_all!(plots, data::DataFrame, plottables, range, label...) = begin
+plot_all!(plots, data::DataFrame, plottables, label...) = begin
     p = plot()
-    plotted = false
     for (i, n) in enumerate(names(data))
         if plottables[i]
-            plot!(p, data[n][range], label=n, layout=deflayout)
-            plotted = true
+            plotit!(p, data, data[n], n)
         end
     end
-    if plotted
-        push!(plots, p)
-    end
+    push_if_plotted!(plots, p)
 end
 end
-plot_all!(plots, data, plottables::Bool, range, label...) = begin
-    if !plottables || length(data) < (range.stop)
-        return 
-    end
+plot_all!(plots, data, plottables::Bool, label...) = begin
+    if !plottables return end
 
+    p = plot()
     if length(label) > 0
-        push!(plots, plot(data[range], label = label[1]))
+        l = label[1]
     else
-        push!(plots, plot(data[range]))
+        l = ""
     end
+    plotit!(p, data, data, l)
+    push_if_plotted!(plots, p)
 end
+
+"""
+Return the intersect of the array range and the default plotting range. 
+"""
+inbounds_range(data) = intersect(1:length(data), defaults[:plot_range])
+
+"""
+If it isn't empty push a plot to an array of plots,
+"""
+push_if_plotted!(plots, p) = if p.n > 0 push!(plots, p) end

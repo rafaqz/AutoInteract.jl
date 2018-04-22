@@ -1,3 +1,8 @@
+global defaults = Dict(:maxlen_widget_array => 9,
+                       :minlen_plottable_array => 10,
+                       :missing_label => "unknown",
+                       :plot_range => 1:10000000
+                  )
 
 """
     set_defaults(args...)
@@ -20,12 +25,12 @@ function set_defaults(args...)
     end
 end
 
-
 """
     get_box(::T)
 
 Returns the vbox or hbox function depending on input type.
-Add methods to control the layout.
+Add methods to control the layout. Associtave structures are displayed 
+vertically by default, otherwise horizontally.
 
 # Examples
 
@@ -61,7 +66,7 @@ function get_range(x::AbstractFloat, label)
     else
         high = x * 2
     end
-    step = (high - low) / 100.0
+    step = (high - low) / 100
     return low:step:high
 end
 function get_range(x::Integer, label)
@@ -75,3 +80,28 @@ function get_range(x::Integer, label)
     end
     return range
 end
+
+@require Unitful begin
+function get_range(x::Unitful.Quantity, label)
+    u = Unitful.unit(x)
+    low = 0.0u
+    if x == 0.0u
+        high = 1.0u
+    else
+        high = x * 2
+    end
+    step = (high - low) / 100
+    return low:step:high
+end
+end
+
+"""
+    plotit!(p, parent, data, label)
+
+Common plotting function. Can extend specific methods for a parent type, 
+or customise for a particular label.
+
+p is a Plots object to plot to.
+"""
+plotit!(p, parent, data, label) =
+    plot!(p, data[inbounds_range(data)], label=label, layout=deflayout)

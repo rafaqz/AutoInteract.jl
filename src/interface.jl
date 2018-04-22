@@ -68,15 +68,11 @@ make_widgets(xs::AbstractArray, label) =
         labels = [string(label, n) for n = 1:length(xs)]
         make_widgets.(xs, labels)
     end
-make_widgets(x::Integer, label) = begin
-    range = get_range(x, label)
-    make_widgets(x, label, range)
-end
-make_widgets(x::AbstractFloat, label) = begin
+make_widgets(x::Number, label) = begin
     range = get_range(x, label)
     return make_widgets(x, label, range)
 end
-make_widgets(x::Real, label, range) = begin
+make_widgets(x::Number, label, range) = begin
     widget = slider(range, value = x, label = label)
     widget.signal.name = label * "_slider"
     return widget
@@ -213,7 +209,16 @@ Interfaces are build recursively from any type containing widgets. This
 mostly means anything returned by make_widgets, but also after having any
 sub-components deleted custom components added:
 """
-make_interface(xs::Tuple; box = get_box(xs)) = box(make_interface.(xs)...)
+make_interface(xs::Tuple; box = get_box(xs)) = begin
+    widgets = [] 
+    for x in xs
+        widget = make_interface(x)
+        if widget != nothing
+            widget = push!(widgets, widget)
+        end
+    end
+    box(widgets...)
+end
 
 make_interface(xs::AbstractVector{Interact.Slider{T}}; box = get_box(xs)) where T =
     spreadwidgets(make_interface.(xs); cols = 2)
@@ -243,6 +248,7 @@ make_interface(x::OrderedDict; box = get_box(x)) = begin
     return box(widgets...)
 end
 end
+make_interface(xs::Void; box = vbox) = nothing
 
 function arrange_columns(xs; box = get_box(xs)) 
     columns = []

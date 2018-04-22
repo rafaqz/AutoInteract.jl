@@ -1,9 +1,9 @@
+using Requires
 using AutoInteract
 using Interact
 using Plots
 using Base.Test
 using Interact.update_view
-
 
 # TODO: properly test AxisArrays and other complex implementations.
 
@@ -52,6 +52,17 @@ mutable struct teststruct
 end
 
 @testset "interface" begin
+
+    @require Unitful begin
+        @testset "interface from Unitful Unit" begin
+            slider = make_widgets(1.0u"g", "Unit")
+            @test slider.label == "Unit" 
+            @test slider.value == 1.0u"g"
+            @test slider.range == 0.0u"g":0.02u"g":2.0u"g"
+            @test slider.signal.name == "Unit_slider"
+        end
+    end
+
     @testset "interface from Float64" begin
         ref_slider = mockslider(1.0, "Float64", 0.0:0.02:2.0)
         slider = make_widgets(1.0, "Float64")
@@ -137,7 +148,6 @@ end
         isequal(iface.layout.box.vert, ref_iface.layout.box.vert)
         isequal(iface.vert, ref_iface.vert)
     end
-
 end
 
 @testset "plottables" begin
@@ -160,12 +170,12 @@ end
     end
 
     @testset "No plots if plottables signals are false" begin
-        @test typeof(plot_all(data, signals.value, 1:100)) == Void
+        @test typeof(plot_all(data, signals.value)) == Void
     end
 
     @testset "Plots an array if its signal is true" begin
         signals.value[:a] = true
-        p = plot_all(data, signals.value, 1:100)
+        p = plot_all(data, signals.value)
         @test length(p.subplots) == 1
         @test p.subplots[1].series_list[1].d[:y] == array
     end
