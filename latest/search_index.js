@@ -85,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Introduction",
     "title": "AutoInteract.plot_all",
     "category": "function",
-    "text": "plot_all(data, plottables, range, [label])\n\nPlot all data for selected plottables, over the specified range.\n\n\n\n"
+    "text": "plot_all(data, plottables, [label])\n\nPlot all data for selected plottables.\n\n\n\n"
 },
 
 {
@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Introduction",
     "title": "AutoInteract.plot_all!",
     "category": "function",
-    "text": "plot_all!(plots, data, plottables, range, label)\n\nRecursive plotting methods for (almost) all types.\n\n\n\n"
+    "text": "plot_all!(plots, data, plottables, label)\n\nRecursive plotting methods for (almost) all types.\n\n\n\n"
 },
 
 {
