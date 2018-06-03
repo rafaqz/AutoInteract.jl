@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/rafaqz/AutoInteract.jl.svg?branch=master)](https://travis-ci.org/rafaqz/AutoInteract.jl)
 
+[![codecov.io](http://codecov.io/github/rafaqz/AutoInteract.jl/coverage.svg?branch=master)](http://codecov.io/github/rafaqz/AutoInteract.jl?branch=master)
+
 The aim of this module is to allow automatic generation of an interactive
 interface for any julia type.
 
