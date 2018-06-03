@@ -15,5 +15,6 @@ See the [Documentation](https://rafaqz.github.io/AutoInteract.jl/latest/) for mo
 
 
 Currently AutoInteract.jl supports [Interact.jl](https://github.com/JuliaGizmos/Interact.jl)
-and [Reactive.jl](https://github.com/JuliaGizmos/Reactive.jl), but other signals
-packages could also be supported in future.
+and [Reactive.jl](https://github.com/JuliaGizmos/Reactive.jl), and 
+[InteractNext.jl](https://github.com/JuliaGizmos/InteractNext.jl) in a limited
+form - the layout is pretty lousy.

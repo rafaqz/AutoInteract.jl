@@ -10,12 +10,12 @@ get_signals(xs::Tuple) = begin
     for x in xs
         if x != nothing && x != tuple()
             sig = get_signals(x)
-            if isa(sig, Signal)
+            if is_usable(sig)
                 push!(sig_array, sig)
             end
         end
     end
-    return map(sigs::Vararg -> sigs, map(s -> signal(s), sig_array)...)
+    mapsig(sig_array)
 end
 get_signals(x::OrderedDict) = begin sigs = []
     used_keys = []
@@ -23,7 +23,7 @@ get_signals(x::OrderedDict) = begin sigs = []
     for key in k
         if x != nothing && x != tuple()
             sig = get_signals(x[key])
-            if isa(sig, Signal)
+            if is_usable(sig)
                 push!(sigs, sig) 
                 push!(used_keys, key) 
             end
@@ -35,10 +35,22 @@ get_signals(x::OrderedDict) = begin sigs = []
         return nothing
     end
 end
-get_signals(x::Signal) = x
-get_signals(x::Interact.InputWidget) = signal(x)
 get_signals(xs::AbstractArray) = 
     map(s::Vararg -> reshape([s...], size(xs)), get_signals.(xs)...)
+@require Interact begin
+    get_signals(x::Signal) = x
+    get_signals(x::Interact.InputWidget) = signal(x)
+    is_usable(sig) = isa(sig, Signal)
+    mapsig(sig_array) = map(sigs::Vararg -> sigs, map(s -> signal(s), sig_array)...)
+end
+@require InteractNext begin
+    get_signals(x::Observable) = x
+    get_signals(x::WebIO.Scope) = observe(x)
+    mapsig(sig_array) = begin
+        map(sigs::Vararg -> sigs, sig_array[1], sig_array...)
+    end
+    is_usable(sig) = isa(sig, Observable)
+end
 
 
 """

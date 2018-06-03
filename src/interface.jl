@@ -72,17 +72,29 @@ make_widgets(x::Number, label) = begin
     range = get_range(x, label)
     return make_widgets(x, label, range)
 end
-make_widgets(x::Number, label, range) = begin
-    widget = slider(range, value = x, label = label)
-    widget.signal.name = label * "_slider"
-    return widget
+@require Interact begin
+    make_widgets(x::Number, label, range) = begin
+        widget = slider(range, value = x, label = label)
+        widget.signal.name = label * "_slider"
+        return widget
+    end
+    make_widgets(x::Bool, label) = begin
+        widget = togglebutton(label, value = x)
+        widget.signal.name = label * "_toggle"
+        return widget
+    end
+end
+@require InteractNext begin
+    make_widgets(x::Number, label, range) = begin
+        widget = slider(range, value = x, label = label)
+        return widget
+    end
+    make_widgets(x::Bool, label) = begin
+        widget = checkbox(x, label=label)
+        return widget
+    end
 end
 make_widgets(x::Function, label) = nothing
-make_widgets(x::Bool, label) = begin
-    widget = togglebutton(label, value = x)
-    widget.signal.name = label * "_toggle"
-    return widget
-end
 @require DataFrames begin
 make_widgets(x::DataFrame, label...) = begin
     array = []
@@ -97,14 +109,12 @@ make_widgets(x::DataFrame, label...) = begin
     return reshape(array, 1, length(array))
 end
 end
-@require AxisArrays begin
 make_widgets(xs::AxisArray, label...) = nothing
-end
 @require StaticArrays begin
-make_widgets(xs::FieldVector, label...) = begin
-    names = string.(fieldnames(xs))
-    [make_widgets(x, n) for (x, n) in zip(xs, names)]
-end
+    make_widgets(xs::FieldVector, label...) = begin
+        names = string.(fieldnames(xs))
+        [make_widgets(x, n) for (x, n) in zip(xs, names)]
+    end
 end
 
 
@@ -166,9 +176,7 @@ make_plottables(x::DataFrame, label...) = begin
                      Axis{:row}([:row]), Axis{:col}(labels))
 end
 end
-@require AxisArrays begin
 make_plottables(xs::AxisArray, label...) = make_toggles(xs)
-end
 # Arrays get a toggle to control subplots 
 make_plottables(x::Vector, label) = 
     if length(x) >= defaults[:minlen_plottable_array]
@@ -176,7 +184,6 @@ make_plottables(x::Vector, label) =
     end
 
 
-@require AxisArrays begin
 make_toggles(x::A) where A<:AxisArray = begin
     a = [[string(a[i]) for i in 1:length(a)] for a in axes(x)]
     num_axes = length(a)
@@ -188,16 +195,26 @@ make_toggles(x::A) where A<:AxisArray = begin
         return nothing
     end
 end
-end
 @require StaticArrays begin
-make_toggles(x::FieldVector) = make_toggles(fieldnames(x))
+    make_toggles(x::FieldVector) = make_toggles(fieldnames(x))
 end
-make_toggles(colnames::AbstractArray) = 
-    [togglebutton(string(colnames[c])) for c = 1:length(colnames)]
-make_toggles(rownames::AbstractArray{String}, colnames::AbstractArray{String}) = begin
-    rows = length(rownames)
-    cols = length(colnames)
-    return [togglebutton(join([string(rownames[r]), string(colnames[c])], ",")) for r = 1:rows, c = 1:cols]
+@require Interact begin
+    make_toggles(colnames::AbstractArray) = 
+        [togglebutton(string(colnames[c])) for c = 1:length(colnames)]
+    make_toggles(rownames::AbstractArray{String}, colnames::AbstractArray{String}) = begin
+        rows = length(rownames)
+        cols = length(colnames)
+        return [togglebutton(join([string(rownames[r]), string(colnames[c])], ",")) for r = 1:rows, c = 1:cols]
+    end
+end
+@require InteractNext begin
+    make_toggles(colnames::AbstractArray) = 
+        [checkbox(false, label=string(colnames[c])) for c = 1:length(colnames)]
+    make_toggles(rownames::AbstractArray{String}, colnames::AbstractArray{String}) = begin
+        rows = length(rownames)
+        cols = length(colnames)
+        return [checkbox(false, label = join([string(rownames[r]), string(colnames[c])], ",")) for r = 1:rows, c = 1:cols]
+    end
 end
 
 
@@ -220,23 +237,29 @@ make_interface(xs::Tuple; box = get_box(xs)) = begin
     box(widgets...)
 end
 
-make_interface(xs::AbstractVector{Interact.Slider{T}}; box = get_box(xs)) where T =
-    spreadwidgets(make_interface.(xs); cols = 2)
-make_interface(xs::AbstractVector{Interact.ToggleButton}; box = get_box(xs)) = 
-    box(make_interface.(xs)...)
 make_interface(xs::AbstractArray{T,1}; box = get_box(xs)) where T = 
     spreadwidgets(make_interface.(xs); cols = 2)
 make_interface(xs::AbstractArray{T,2}; box = get_box(xs)) where T = arrange_columns(xs; box = box)
-make_interface(x::Interact.Widget; box = get_box(x)) = x
-@require DataStructures begin
-make_interface(x::OrderedDict{Any,Interact.Slider{T}}; box = get_box(x)) where T = begin
-    widgets = []
-    for (key, val) in x
-        if val != nothing
-            push!(widgets, make_interface(val))
+@require Interact begin
+    make_interface(xs::AbstractVector{Interact.Slider{T}}; box = get_box(xs)) where T =
+        spreadwidgets(make_interface.(xs); cols = 2)
+    make_interface(xs::AbstractVector{Interact.ToggleButton}; box = get_box(xs)) = 
+        box(make_interface.(xs)...)
+    make_interface(x::Interact.Widget; box = get_box(x)) = x
+    make_interface(x::OrderedDict{Any,Interact.Slider{T}}; box = get_box(x)) where T = begin
+        widgets = []
+        for (key, val) in x
+            if val != nothing
+                push!(widgets, make_interface(val))
+            end
         end
+        return spreadwidgets(widgets; cols = 3)
     end
-    return spreadwidgets(widgets; cols = 3)
+end
+@require InteractNext begin
+    make_interface(xs::AbstractVector{WebIO.Scope}; box = get_box(xs)) where T =
+        spreadwidgets(make_interface.(xs); cols = 2)
+    make_interface(x::WebIO.Scope; box = get_box(x)) = x
 end
 make_interface(x::OrderedDict; box = get_box(x)) = begin
     widgets = []
@@ -246,7 +269,6 @@ make_interface(x::OrderedDict; box = get_box(x)) = begin
         end
     end
     return box(widgets...)
-end
 end
 make_interface(xs::Void; box = vbox) = nothing
 
