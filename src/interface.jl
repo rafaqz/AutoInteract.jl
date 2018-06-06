@@ -78,6 +78,11 @@ end
         widget.signal.name = label * "_slider"
         return widget
     end
+    make_widgets(x::Number, label, range) = begin
+        widget = slider(range, value = x, label = label)
+        widget.signal.name = label * "_slider"
+        return widget
+    end
     make_widgets(x::Bool, label) = begin
         widget = togglebutton(label, value = x)
         widget.signal.name = label * "_toggle"
@@ -117,10 +122,8 @@ make_widgets(xs::AxisArray, label...) = nothing
     end
 end
 
-
 """
     make_plottables(x, label)
-
 Generate 'plottable' toggles recursively, with optional label.
 """
 function make_plottables end
@@ -257,11 +260,12 @@ make_interface(xs::AbstractArray{T,2}; box = get_box(xs)) where T = arrange_colu
     end
 end
 @require InteractNext begin
-    make_interface(xs::AbstractVector{WebIO.Scope}; box = get_box(xs)) where T =
+    get_box(x::WebIO.Scope) = hbox
+    make_interface(xs::AbstractVector{WebIO.Scope}; box=get_box(xs)) =
         spreadwidgets(make_interface.(xs); cols = 2)
-    make_interface(x::WebIO.Scope; box = get_box(x)) = x
+    make_interface(x::WebIO.Scope; box=get_box(x)) = x
 end
-make_interface(x::OrderedDict; box = get_box(x)) = begin
+make_interface(x::OrderedDict; box=get_box(x)) = begin
     widgets = []
     for (key, val) in x
         if val != nothing

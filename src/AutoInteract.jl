@@ -3,6 +3,7 @@ module AutoInteract
 using Requires
 using DataStructures
 using AxisArrays
+using Plots
 
 @require InteractNext begin
     using InteractNext
@@ -24,9 +25,7 @@ end
 include("interface.jl")
 include("signals.jl")
 include("api.jl")
-@require Plots begin
-    include("plots.jl")
-end
+include("plots.jl")
 
 export set_defaults, steprange, box, make_widgets, make_interface, make_plottables, spreadwidgets
 export plot_all, plot_all!
