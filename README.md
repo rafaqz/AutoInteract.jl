@@ -1,5 +1,8 @@
 # AutoInteract
 
+__There is a much better way of doing this now, like using Flatten.jl with FieldMetadata.jl to generate sliders, like this:
+https://github.com/cesaraustralia/DynamicGridsInteract.jl/blob/master/src/interact.jl__
+
 [![Build Status](https://travis-ci.org/rafaqz/AutoInteract.jl.svg?branch=master)](https://travis-ci.org/rafaqz/AutoInteract.jl)
 
 [![codecov.io](http://codecov.io/github/rafaqz/AutoInteract.jl/coverage.svg?branch=master)](http://codecov.io/github/rafaqz/AutoInteract.jl?branch=master)
